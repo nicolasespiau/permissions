@@ -191,3 +191,31 @@ Call: `/permissions/user/5ab282a4f90bee91f3dd2e48/users/5ab282a4f90bee91f3dd2e48
 ```json
 ["PUT", "GET"]
 ```
+
+## Tests
+
+### 1. Build networks
+
+```bash
+docker network create db && \
+docker network create cache && \
+docker network create services
+```
+
+### 2. Launch dependencies
+
+```bash
+docker-compose -f compose/dev-dependencies.yml up -d
+```
+
+### 3. Build the Docker image
+
+ ```bash
+ docker build -t local/permissions-service:test .
+ ```
+
+ ### 4. Run tests
+
+ ```bash
+ docker-compose -f compose/dev-test.yml
+ ```

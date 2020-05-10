@@ -562,7 +562,8 @@ describe("GET permissions", () => {
       });
       it("should not change permissions", async () => {
         const newPerms = await Permissions.compileUserPermissions(fixtureLoader.get("users", 4));
-        test.object(newPerms).is(userPermissions);
+        test.object(newPerms).contains(userPermissions);
+        test.object(userPermissions).contains(newPerms);
       });
       it("should remove permissions on specified object", async () => {
         for (const method of verbsToRemove) {

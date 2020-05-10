@@ -3,13 +3,13 @@ version: "3.0"
 services:
   database:
     container_name: database
-    image: mongo:4-xenial
+    image: mongo:4.2.6-bionic
     networks:
       - db
 
   cache:
     container_name: cache
-    image: redis:3.0.6-32bit
+    image: redis:6.0.1-buster
     networks:
       - cache
     logging:

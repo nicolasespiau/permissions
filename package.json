@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha -b"
+    "test": "CONFIG_FILE=./config/app.conf.json mocha -b"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,8 @@
     "koa-body": "^4.1.1",
     "koa-morgan": "^1.0.1",
     "koa-router": "^8.0.8",
-    "mongodb": "^3.5.7"
+    "mongodb": "^3.5.7",
+    "nconf": "^0.10.0"
   },
   "devDependencies": {
     "@bonjourjohn/fixture-manager": "^1.0.1",

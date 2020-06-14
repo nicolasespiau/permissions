@@ -7,4 +7,4 @@ RUN npm install
 
 EXPOSE  80
 
-CMD ["node","index.js"]
+CMD ["node","index.js","--config","/var/www/config/app.conf.json"]

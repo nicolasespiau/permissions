@@ -4,19 +4,10 @@ services:
   permissions-service:
     container_name: permissions-service
     image: local/permissions-service:test
-    environment:
-      - NODE_ENV=test
-      - PORT=80
-      - MONGO_DB=myappdatabase
-      - MONGO_HOST=database
-      - MONGO_PORT=27017
-      - REDIS_HOST=cache
-      - REDIS_PORT=6379
-      - REDIS_DBINDEX=0
     command: npm test
     tty: true
     volumes:
-      - "../:/var/www"
+      - "../config/app.conf.json:/var/www/config/app.conf.json"
       - /var/www/node_modules
     ports:
       - 8098:80

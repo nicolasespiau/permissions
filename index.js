@@ -4,7 +4,7 @@ const koa = require('koa');
 const koaBody = require('koa-body');
 const morgan = require('koa-morgan');
 const AppError = require('@bonjourjohn/app-error');
-const appSettings = require('./config/app.conf');
+const appSettings = require('./config/config').getAppSettings();
 const ObjectUtils = require('@bonjourjohn/utils').Objects;
 
 const app = new koa();
@@ -79,9 +79,7 @@ app.use(async (ctx, next) => {
 });
 
 /** install logger **/
-// if (process.env.NODE_ENV !== "development") {
 app.use(morgan(':req[X-Forwarded-For] - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ":req[X-Access-Token]"'));
-// }
 
 const mongoConnection = require('./lib/mongoClient');
 const cacheClient = require('./lib/cacheClient');

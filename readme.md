@@ -180,7 +180,7 @@ Call: `/permissions/user/5ab289a0f90bee91f3dd2e48?objectName=subscriptions`
 { "subscriptions": ["POST", "PUT", "GET"] }
 ```
 
-### GET /permissions/user/:iserId/:objectName/:objectId
+### GET /permissions/user/:userId/:objectName/:objectId
 
 Returns all permissions granted this user on this object instance, according to their role and private granted permissions.
 

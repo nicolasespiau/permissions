@@ -8,23 +8,25 @@ nconf.file(nconf.any("CONFIG_FILE", "config"));
 module.exports = {
     getAppSettings() {
         return {
-            "port": nconf.get("PORT")
+            "port": nconf.get("PORT"),
+            "logLevel": nconf.get("LOG_LEVEL") || "error"
         }
     },
     getRedisConf() {
         return {
             "host": nconf.get("REDIS_HOST"),
             "port": nconf.get("REDIS_PORT"),
-            "db": nconf.get("REDIS_DB")
+            "db": nconf.get("REDIS_DBINDEX"),
+            "connectTimeout": 1000
         }
     },
     getMongoConf() {
         return {
             "db": nconf.get("MONGO_DB"),
-            "host": nconf.get("MONGO_HOST"),
+            "host": nconf.get("MONGO_HOST")+":"+nconf.get("MONGO_PORT"),
             "user": nconf.get("MONGO_USER"),
             "password": nconf.get("MONGO_PASSWD"),
-            "port": nconf.get("MONGO_PORT")
+            "replicaSet": nconf.get("MONGO_REPLSET")
         }
     }
 }

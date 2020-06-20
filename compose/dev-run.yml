@@ -3,12 +3,11 @@ version: "3.0"
 services:
   permissions-service:
     container_name: permissions-service
-    image: local/permissions-service:test
-    command: npm test
+    image: local/permissions-service:dev
     tty: true
+    command: bash
     volumes:
-      - "./app.conf.json:/var/www/config/app.conf.json"
-      - /var/www/node_modules
+      - "../:/var/www/"
     ports:
       - 8098:80
     stdin_open: true

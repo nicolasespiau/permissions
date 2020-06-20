@@ -6,6 +6,7 @@ const morgan = require('koa-morgan');
 const AppError = require('@bonjourjohn/app-error');
 const appSettings = require('./config/config').getAppSettings();
 const ObjectUtils = require('@bonjourjohn/utils').Objects;
+const winston = require("winston");
 
 const app = new koa();
 
@@ -26,10 +27,6 @@ app.use(async (ctx, next) => {
       errno: err.errno,
       error: err.error
     };
-
-    if (err.errno >= 500) {
-      ctx.raven.captureException(err);
-    }
   }
 });
 
@@ -78,17 +75,19 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-/** install logger **/
+/** install loggers **/
 app.use(morgan(':req[X-Forwarded-For] - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ":req[X-Access-Token]"'));
 
-const mongoConnection = require('./lib/mongoClient');
-const cacheClient = require('./lib/cacheClient');
-
-app.use(async (c, n) => {
-  //load mongoConnection and mongoClient into context
-  [app.context.DB, app.context.mongoClient] = await mongoConnection.init();
-  app.context.cacheClient = cacheClient;
-
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'permission-service' },
+  transports: [
+    new winston.transports.Console()
+  ],
+});
+app.use(async(c,n) => {
+  app.context.logger = logger;
   await n();
 });
 
@@ -108,24 +107,49 @@ app.on('close', async () => {
 const router = require('./routing/router');
 app.use(router.routes());
 
+
+const mongoConnection = require('./lib/mongoClient');
+const cacheClient = require('./lib/cacheClient');
+
 let hostname = require('os').hostname();
 
 let server = app.listen(appSettings.port);
 server.on('listening', async () => {
-  const [DB, mongoClient] = await mongoConnection.init().catch((e) => {
+  [app.context.DB, app.context.mongoClient] = await mongoConnection.init().catch((e) => {
     console.log("ERR", e);
     mongoConnection.close();
     process.exit();
   });
+  app.context.DB.on('connect', () => {
+    console.log("Connected to DB");
+  });
+  app.context.DB.on('close', () => {
+    console.log("Connection to DB close");
+  });
+  app.context.DB.on('error', (err) => {
+    console.log("Connection to DB encountered an error", err);
+  });
+  app.context.DB.on('reconnect', () => {
+    console.log("RE-connected to DB");
+  });
+  app.context.DB.on('commandStarted', () => {
+    console.log("DB command started");
+  });
 
   if (cacheClient.status === "ready") {
     server.emit("ready");
+    app.context.cacheClient = cacheClient;
   }
-  cacheClient.once('ready', () => {
+  cacheClient.on('ready', () => {
+    console.log("Cache ready")
+    app.context.cacheClient = cacheClient;
     server.emit("ready");
   });
 
   console.log('PERMISSIONS-SERVICE running on', hostname, 'port', appSettings.port);
+});
+server.on('ready', async() => {
+  console.log("Server is fully ready.");
 });
 server.on('close', async () => {
   try {

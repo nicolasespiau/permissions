@@ -6,6 +6,8 @@ const _Permissions = require('../model/Permissions.class');
 const ObjectId = require('mongodb').ObjectId;
 const AppError = require('@bonjourjohn/app-error');
 const ObjectUtils = require('@bonjourjohn/utils').Objects;
+const sprintf = require("util").format;
+const deepEqual = require("assert").deepEqual;
 
 module.exports = {
   async createUserPermissions(ctx, next) {
@@ -153,9 +155,14 @@ module.exports = {
       Permissions.init()
     ]);
 
-    const role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
+    let role;
+    try {
+      role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
+    } catch (e) {
+      throw new AppError(500, sprintf("Unable to find Role: %s", e.message), e.stack);
+    }
 
-    if (!role) {
+    if (ObjectUtils.isEmpty() || deepEqual(role, Roles.emptyDocument)) {
       throw new AppError(404, 'Role not found');
     }
 

@@ -73,6 +73,7 @@ module.exports = class PermissionsCollection extends Collection {
     if (object) {
       $match.object = object;
     }
+
     return await this.collection.aggregate(
       [
         {

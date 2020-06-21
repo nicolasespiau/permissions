@@ -7,7 +7,6 @@ const ObjectId = require('mongodb').ObjectId;
 const AppError = require('@bonjourjohn/app-error');
 const ObjectUtils = require('@bonjourjohn/utils').Objects;
 const sprintf = require("util").format;
-const deepEqual = require("assert").deepEqual;
 
 module.exports = {
   async createUserPermissions(ctx, next) {
@@ -25,7 +24,7 @@ module.exports = {
 
     const user = await Users.findOne({_id: ObjectId(ctx.params.userId)});
 
-    if (!user) {
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(Users.emptyDocument, user)) {
       throw new AppError(404, "User not found");
     }
 
@@ -91,7 +90,7 @@ module.exports = {
 
     const user = await Users.findOne({_id: ObjectId(ctx.params.userId)});
 
-    if (!user) {
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(user, Users.emptyDocument)) {
       throw new AppError(404, "User not found");
     }
 
@@ -155,14 +154,9 @@ module.exports = {
       Permissions.init()
     ]);
 
-    let role;
-    try {
-      role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
-    } catch (e) {
-      throw new AppError(500, sprintf("Unable to find Role: %s", e.message), e.stack);
-    }
+    const role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
 
-    if (ObjectUtils.isEmpty() || deepEqual(role, Roles.emptyDocument)) {
+    if (ObjectUtils.isEmpty(role) || ObjectUtils.deepEqual(role, Roles.emptyDocument)) {
       throw new AppError(404, 'Role not found');
     }
 
@@ -202,8 +196,8 @@ module.exports = {
     ]);
 
     const user = await Users.findOne({"_id": ObjectId(ctx.params.userId)});
-
-    if (!user) {
+    
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(user, Users.emptyDocument)) {
       throw new AppError(404, "User not found");
     }
 
@@ -236,7 +230,7 @@ module.exports = {
 
     const user = await Users.findOne({"_id": ObjectId(ctx.params.userId)});
 
-    if (!user) {
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(user, Users.emptyDocument)) {
       throw new AppError(404, "User not found");
     }
 
@@ -274,7 +268,7 @@ module.exports = {
     ]);
 
     const role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
-    if (!role) {
+    if (ObjectUtils.isEmpty(role) || ObjectUtils.deepEqual(role, Roles.emptyDocument)) {
       throw new AppError(404, "Role not found");
     }
 
@@ -317,12 +311,12 @@ module.exports = {
     ]);
 
     const role = await Roles.findOne({_id: ObjectId(ctx.params.roleId)});
-    if (!role) {
+    if (ObjectUtils.isEmpty(role) || ObjectUtils.deepEqual(role, Roles.emptyDocument)) {
       throw new AppError(404, "Role not found");
     }
 
     //remove approvals from permission
-    await Permissions.remove(
+    await Permissions.deleteMany(
       {
         "roleId": ObjectId(role._id.toString()),
         "object": ctx.params.objectName,
@@ -352,7 +346,7 @@ module.exports = {
     ]);
 
     const user = await Users.findOne({_id: ObjectId(ctx.params.userId)});
-    if (!user) {
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(user, Users.emptyDocument)) {
       throw new AppError(404, "User not found");
     }
 
@@ -415,7 +409,7 @@ module.exports = {
     ]);
 
     const user = await Users.findOne({_id: ObjectId(ctx.params.userId)});
-    if (!user) {
+    if (ObjectUtils.isEmpty(user) || ObjectUtils.deepEqual(user, Users.emptyDocument)) {
       throw new AppError(404, "User not found");
     }
 

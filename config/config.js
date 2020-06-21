@@ -9,7 +9,8 @@ module.exports = {
     getAppSettings() {
         return {
             "port": nconf.get("PORT"),
-            "logLevel": nconf.get("LOG_LEVEL") || "error"
+            "logLevel": nconf.get("LOG_LEVEL") || "error",
+            "logFormat": nconf.get("LOG_FORMAT") || "splat,simple"
         }
     },
     getRedisConf() {

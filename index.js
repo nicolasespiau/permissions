@@ -6,7 +6,8 @@ const morgan = require('koa-morgan');
 const AppError = require('@bonjourjohn/app-error');
 const appSettings = require('./config/config').getAppSettings();
 const ObjectUtils = require('@bonjourjohn/utils').Objects;
-const winston = require("winston");
+const Logger = require("./lib/logger");
+const sprintf = require("util").format;
 
 const app = new koa();
 
@@ -20,7 +21,11 @@ app.use(async (ctx, next) => {
       err = AppError.fromError(err);
     }
 
-    console.log(err);
+    if(ctx.logger) {
+      ctx.logger.log("error", err);
+    } else {
+      console.log(err);
+    }
     // will only respond with JSON
     ctx.status = err.errno;
     ctx.body = {
@@ -78,28 +83,24 @@ app.use(async (ctx, next) => {
 /** install loggers **/
 app.use(morgan(':req[X-Forwarded-For] - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ":req[X-Access-Token]"'));
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
+
+const logger = Logger.createLogger({
+  level: appSettings.logLevel || "error",
+  format: appSettings.logFormat,
   defaultMeta: { service: 'permission-service' },
-  transports: [
-    new winston.transports.Console()
-  ],
+  transports: ["Console"],
 });
-app.use(async(c,n) => {
-  app.context.logger = logger;
-  await n();
-});
+app.context.logger = logger;
 
 app.on('close', async () => {
-  console.log("closing app");
+  logger.log("info", "closing app");
   try {
     await Promise.all([
       app.context.mongoClient.close(),
       app.context.cacheClient.quit()
     ]);
   } catch (e) {
-    console.log("Err when closing app:", e);
+    logger.log("warn", "Err when closing app:", e);
   }
 });
 
@@ -115,25 +116,22 @@ let hostname = require('os').hostname();
 
 let server = app.listen(appSettings.port);
 server.on('listening', async () => {
-  [app.context.DB, app.context.mongoClient] = await mongoConnection.init().catch((e) => {
-    console.log("ERR", e);
+  [app.context.DB, app.context.mongoClient] = await mongoConnection.init(app.context).catch((e) => {
+    app.context.logger.log("error", sprintf("Error when initiating mongo connection: %s", e));
     mongoConnection.close();
     process.exit();
   });
   app.context.DB.on('connect', () => {
-    console.log("Connected to DB");
+    app.context.logger.log("info", "Connected to DB");
   });
   app.context.DB.on('close', () => {
-    console.log("Connection to DB close");
+    app.context.logger.log("info", "Connection to DB close");
   });
   app.context.DB.on('error', (err) => {
-    console.log("Connection to DB encountered an error", err);
+    app.context.logger.log("error", sprintf("Connection to DB encountered an error: %s", err));
   });
   app.context.DB.on('reconnect', () => {
-    console.log("RE-connected to DB");
-  });
-  app.context.DB.on('commandStarted', () => {
-    console.log("DB command started");
+    app.context.logger.log("info", "RE-connected to DB");
   });
 
   if (cacheClient.status === "ready") {
@@ -141,7 +139,7 @@ server.on('listening', async () => {
     app.context.cacheClient = cacheClient;
   }
   cacheClient.on('ready', () => {
-    console.log("Cache ready")
+    app.context.logger.log("info", "Cache ready");
     app.context.cacheClient = cacheClient;
     server.emit("ready");
   });
@@ -149,14 +147,14 @@ server.on('listening', async () => {
   console.log('PERMISSIONS-SERVICE running on', hostname, 'port', appSettings.port);
 });
 server.on('ready', async() => {
-  console.log("Server is fully ready.");
+  app.context.logger.log("info", "Server is fully ready.");
 });
 server.on('close', async () => {
   try {
     mongoConnection.close();
     cacheClient.end();
   } catch (e) {
-    console.log("Err when closing app:", e);
+    app.context.logger.log("error", sprintf("Err when closing app: %s", e));
   }
 });
 
